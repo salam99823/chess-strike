@@ -2,20 +2,23 @@
 
 mod actions;
 mod audio;
+mod camera;
 mod loading;
+mod map;
 mod menu;
 mod player;
 
-use crate::actions::ActionsPlugin;
-use crate::audio::InternalAudioPlugin;
-use crate::loading::LoadingPlugin;
-use crate::menu::MenuPlugin;
-use crate::player::PlayerPlugin;
+use crate::camera::InternalCameraPlugin;
+use crate::{
+    actions::ActionsPlugin, audio::InternalAudioPlugin, loading::LoadingPlugin, map::MapPlugin,
+    menu::MenuPlugin, player::PlayerPlugin,
+};
 
 use bevy::app::App;
-#[cfg(debug_assertions)]
+#[cfg(feature = "diagnostic")]
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::*;
 
 // This example game uses States to separate logic
 // See https://bevy-cheatbook.github.io/programming/states.html
@@ -35,15 +38,22 @@ pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.init_state::<GameState>().add_plugins((
-            LoadingPlugin,
-            MenuPlugin,
-            ActionsPlugin,
-            InternalAudioPlugin,
-            PlayerPlugin,
-        ));
-
+        app.init_state::<GameState>()
+            .add_plugins((
+                ActionsPlugin,
+                InternalCameraPlugin,
+                InternalAudioPlugin,
+                PlayerPlugin,
+                MapPlugin,
+                MenuPlugin,
+                LoadingPlugin,
+            ))
+            .add_plugins(RapierPhysicsPlugin::<NoUserData>::default());
         #[cfg(debug_assertions)]
+        {
+            app.add_plugins(RapierDebugRenderPlugin::default());
+        }
+        #[cfg(feature = "diagnostic")]
         {
             app.add_plugins((
                 FrameTimeDiagnosticsPlugin::default(),
